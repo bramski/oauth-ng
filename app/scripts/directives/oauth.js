@@ -2,7 +2,7 @@
 
 var directives = angular.module('oauth.directive', []);
 
-directives.directive('oauth', function(AccessToken, Endpoint, Profile, $location, $rootScope, $compile, $http, $templateCache) {
+directives.directive('oauth', function(AccessTokenFactory, EndpointFactory, ProfileFactory, $location, $rootScope, $compile, $http, $templateCache) {
 
   var definition = {
     restrict: 'AE',
@@ -11,6 +11,7 @@ directives.directive('oauth', function(AccessToken, Endpoint, Profile, $location
       site: '@',          // (required) set the oauth server host (e.g. http://oauth.example.com)
       clientId: '@',      // (required) client id
       redirectUri: '@',   // (required) client redirect uri
+      clientName: '@',    // (optional) name for this access token, defaults to 'default'.  Used for multi-tenancy
       scope: '@',         // (optional) scope
       profileUri: '@',    // (optional) user profile uri (e.g http://example.com/me)
       template: '@',      // (optional) template to render (e.g views/templates/default.html)
@@ -22,16 +23,25 @@ directives.directive('oauth', function(AccessToken, Endpoint, Profile, $location
 
   definition.link = function postLink(scope, element, attrs) {
     scope.show = 'none';
+    var accessToken = undefined;
+    var endPoint = undefined;
+    var profile = undefined;
 
     scope.$watch('clientId', function(value) { init() });
 
     var init = function() {
       initAttributes();          // sets defaults
+      initObjects();
       compile();                 // compiles the desired layout
-      Endpoint.set(scope);       // sets the oauth authorization url
-      AccessToken.set(scope);    // sets the access token object (if existing, from fragment or session)
+      accessToken.set(scope);    // sets the access token object (if existing, from fragment or session)
       initProfile(scope);        // gets the profile resource (if existing the access token)
       initView();                // sets the view (logged in or out)
+    };
+
+    var initObjects = function() {
+      accessToken = AccessTokenFactory.findOrCreate( scope.clientName || 'default')
+      endPoint = EndpointFactory.create(scope, accessToken);  //creates an endpoint handler for this scope
+      profile = ProfileFactory.create(accessToken);
     };
 
     var initAttributes = function() {
@@ -51,17 +61,17 @@ directives.directive('oauth', function(AccessToken, Endpoint, Profile, $location
     };
 
     var initProfile = function(scope) {
-      var token = AccessToken.get();
+      var token = accessToken.get();
 
       if (token && token.access_token && scope.profileUri) {
-        Profile.find(scope.profileUri).success(function(response) {
+        profile.find(scope.profileUri).success(function(response) {
           scope.profile = response
         })
       }
     };
 
     var initView = function() {
-      var token = AccessToken.get();
+      var token = accessToken.get();
 
       if (!token)             { return loggedOut()  }  // without access token it's logged out
       if (token.access_token) { return authorized() }  // if there is the access token we are done
@@ -69,17 +79,17 @@ directives.directive('oauth', function(AccessToken, Endpoint, Profile, $location
     };
 
     scope.login = function() {
-      Endpoint.redirect();
+      endPoint.redirect();
     };
 
     scope.logout = function() {
-      AccessToken.destroy(scope);
+      accessToken.destroy(scope);
       loggedOut();
     };
 
     // user is authorized
     var authorized = function() {
-      $rootScope.$broadcast('oauth:authorized', AccessToken.get());
+      $rootScope.$broadcast('oauth:authorized', accessToken.get());
       scope.show = 'logged-in';
     };
 

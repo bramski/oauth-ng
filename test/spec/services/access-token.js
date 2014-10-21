@@ -4,10 +4,10 @@ describe('AccessToken', function() {
 
   var result, $location, localStorageService, AccessToken, date;
 
-  var fragment = 'access_token=token&token_type=bearer&expires_in=7200&state=/path&extra=stuff';
-  var denied   = 'error=access_denied&error_description=error';
+  var fragment = 'access_token=token&token_type=bearer&expires_in=7200&state={"clientName":"default"}&extra=stuff';
+  var denied   = 'error=access_denied&error_description=error&state={"clientName":"default"}';
   var expires_at = '2014-08-17T17:38:37.584Z';
-  var token    = { access_token: 'token', token_type: 'bearer', expires_in: 7200, state: '/path', expires_at: expires_at };
+  var token    = { access_token: 'token', token_type: 'bearer', expires_in: 7200, state: '{"clientName":"default"}', expires_at: expires_at };
 
   beforeEach(module('oauth'));
 
@@ -58,7 +58,7 @@ describe('AccessToken', function() {
       });
 
       it('stores the token in the session', function() {
-        var stored_token = localStorageService.get('token');
+        var stored_token = localStorageService.get('default.token');
         expect(result.access_token).toEqual('token');
       });
     });
@@ -66,7 +66,7 @@ describe('AccessToken', function() {
     describe('with the access token stored in the session', function() {
 
       beforeEach(function() {
-        localStorageService.set('token',token);
+        localStorageService.set('default.token',token);
       });
 
       beforeEach(function() {
@@ -97,7 +97,7 @@ describe('AccessToken', function() {
       });
 
       it('stores the error message in the session', function() {
-        var stored_token = localStorageService.get('token');
+        var stored_token = localStorageService.get('default.token');
         expect(result.error).toBe('access_denied');
       });
     });
@@ -143,7 +143,7 @@ describe('AccessToken', function() {
     });
 
     it('reset the cache', function() {
-      expect(localStorageService.get('token')).toBeUndefined;
+      expect(localStorageService.get('default.token')).toBeUndefined;
     });
   });
 
@@ -202,7 +202,7 @@ describe('AccessToken', function() {
                 //It is an invalid test to have oAuth hash AND be getting token from session
                 //if hash is in URL it should always be used, cuz its coming from oAuth2 provider re-direct
                 $location.hash('');
-                localStorageService.set('token', token);
+                localStorageService.set('default.token', token);
                 result = AccessToken.set().expires_at;
             });
 

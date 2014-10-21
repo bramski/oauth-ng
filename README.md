@@ -22,7 +22,7 @@ Please also update `gh-pages` branch with documentation when applicable.
 `npm install && bower install`
 
 * Install [PhantomJS](http://phantomjs.org/download.html) then run `sudo ln -s ~/phantomjs-VERSION/bin/phantomjs /usr/bin/phantomjs`
-* `grunt karma:unit`
+* `grunt test`
 
 ### Creating your own distribution
 

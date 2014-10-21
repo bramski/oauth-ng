@@ -21,6 +21,7 @@ module.exports = function(config) {
       'app/scripts/**/*.js',
       'app/views/**/*.html',
       'test/spec/services/**/*.js',
+      'test/spec/services/**/*.coffee',
       'test/spec/directives/**/*.js'
     ],
 
@@ -53,7 +54,12 @@ module.exports = function(config) {
 
 
     // Preprocessor for converting HTML files to AngularJS templates
-    preprocessors: { 'app/views/**/*.html': ['html2js'] },
+    preprocessors: {
+      'app/views/**/*.html': ['html2js'],
+      '**/*.coffee': ['coffee']
+    },
+    plugins: ['karma-jasmine','karma-coffee-preprocessor', 'karma-chrome-launcher',
+      'karma-phantomjs-launcher', 'karma-ng-html2js-preprocessor'],
 
     // set the path to use to search the template and set the templates module to
     // load all templates at once

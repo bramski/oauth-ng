@@ -2,13 +2,14 @@
 
 describe('oauth', function() {
 
-  var $rootScope, $location, localStorageService, $httpBackend, $compile, AccessToken, Endpoint, element, scope, result, callback;
+  var $rootScope, $location, localStorageService, $httpBackend, $compile, AccessToken, EndpointFactory, element, scope, result, callback, Endpoint;
 
   var uri      = 'http://example.com/oauth/authorize?response_type=token&client_id=client-id&redirect_uri=http://example.com/redirect&scope=scope&state=/';
-  var fragment = 'access_token=token&token_type=bearer&expires_in=7200&state=/path';
-  var denied   = 'error=access_denied&error_description=error';
+  var fragment = 'access_token=token&token_type=bearer&expires_in=7200&state={"clientName":"default"}';
+  var denied   = 'error=access_denied&error_description=error&state={"clientName":"default"}';
   var headers  = { 'Accept': 'application/json, text/plain, */*', 'Authorization': 'Bearer token' }
   var profile  = { id: '1', full_name: 'Alice Wonderland', email: 'alice@example.com' };
+  var stateFragment = "%257B%2522clientName%2522%253A%2522default%2522%257D"
 
   beforeEach(module('oauth'));
   beforeEach(module('templates'));
@@ -19,7 +20,7 @@ describe('oauth', function() {
   beforeEach(inject(function($injector) { localStorageService = $injector.get('localStorageService') }));
   beforeEach(inject(function($injector) { $httpBackend    = $injector.get('$httpBackend') }));
   beforeEach(inject(function($injector) { AccessToken     = $injector.get('AccessToken') }));
-  beforeEach(inject(function($injector) { Endpoint        = $injector.get('Endpoint') }));
+  beforeEach(inject(function($injector) { EndpointFactory        = $injector.get('EndpointFactory') }));
 
   beforeEach(function() {
     element = angular.element(
@@ -36,8 +37,9 @@ describe('oauth', function() {
   var compile = function() {
     scope = $rootScope;
     $compile(element)(scope);
+    Endpoint = scope.endPoint;
     scope.$digest();
-  }
+  };
 
 
   describe('when logged in', function() {
@@ -177,17 +179,17 @@ describe('oauth', function() {
     });
 
     beforeEach(function() {
-      spyOn(Endpoint, 'redirect');
+      spyOn( window.location, 'replace');
     });
 
-    it('shows the text "Sing In"', function() {
+    it('shows the text "Sign In"', function() {
       result = element.find('.logged-out').text();
       expect(result).toBe('Sign In');
     });
 
     it('sets the href attribute', function() {
       result = element.find('.logged-out').click();
-      expect(Endpoint.redirect).toHaveBeenCalled();
+      expect(window.location.replace).toHaveBeenCalled();
     });
 
     it('shows the login link', function() {
@@ -221,7 +223,7 @@ describe('oauth', function() {
     });
 
     beforeEach(function() {
-      spyOn(Endpoint, 'redirect');
+      spyOn( window.location, 'replace');
     });
 
     it('shows the text "Denied"', function() {
@@ -231,7 +233,7 @@ describe('oauth', function() {
 
     it('sets the href attribute', function() {
       result = element.find('.denied').click();
-      expect(Endpoint.redirect).toHaveBeenCalled();
+      expect(window.location.replace).toHaveBeenCalled();
     });
 
     it('shows the login link', function() {
@@ -298,14 +300,13 @@ describe('oauth', function() {
 
     beforeEach(function() {
       AccessToken.destroy();
-    });
-
-    beforeEach(function() {
+      spyOn( window.location, 'replace');
       compile($rootScope, $compile)
     });
 
-    it('shows the text "Denied"', function() {
-      expect(Endpoint.get()).toMatch('new-authorize-path');
+    it('redirects to the new authorize path', function() {
+      result = element.find('.logged-out').click();
+      expect(window.location.replace).toHaveBeenCalledWith('http://example.com/new-authorize-path?response_type=token&client_id=undefined&redirect_uri=undefined&scope=&state=' + stateFragment);
     });
   });
 });

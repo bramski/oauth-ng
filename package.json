@@ -42,6 +42,7 @@
     "karma-phantomjs-launcher": "~0.1.2",
     "karma-chrome-launcher": "~0.1.2",
     "karma-coverage": "~0.2.1",
+    "karma-coffee-preprocessor": "~0.2.1",
     "grunt-protractor-runner": "~0.2.4",
     "grunt-replace": "~0.7.7",
     "grunt-string-replace": "~0.2.7"
